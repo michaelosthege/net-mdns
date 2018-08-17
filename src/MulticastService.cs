@@ -133,15 +133,14 @@ namespace Makaretu.Dns
         /// <remarks>
         ///   The following filters are applied
         ///   <list type="bullet">
-        ///   <item><description>is enabled</description></item>
-        ///   <item><description>not a loopback</description></item>
+        ///   <item><description>interface is enabled</description></item>
         ///   </list>
         /// </remarks>
         public static IEnumerable<NetworkInterface> GetNetworkInterfaces()
         {
             return NetworkInterface.GetAllNetworkInterfaces()
                 .Where(nic => nic.OperationalStatus == OperationalStatus.Up)
-                .Where(nic => nic.NetworkInterfaceType != NetworkInterfaceType.Loopback);
+                ;
         }
 
         /// <summary>
@@ -155,23 +154,6 @@ namespace Makaretu.Dns
             return GetNetworkInterfaces()
                 .SelectMany(nic => nic.GetIPProperties().UnicastAddresses)
                 .Select(u => u.Address);
-        }
-
-        /// <summary>
-        ///   Get the link local IP addresses of the local machine.
-        /// </summary>
-        /// <returns>
-        ///   A sequence of IP addresses.
-        /// </returns>
-        /// <remarks>
-        ///   All IPv4 addresses are considered link local.
-        /// </remarks>
-        /// <seealso href="https://en.wikipedia.org/wiki/Link-local_address"/>
-        public static IEnumerable<IPAddress> GetLinkLocalAddresses()
-        {
-            return GetIPAddresses()
-                .Where(a => a.AddressFamily == AddressFamily.InterNetwork ||
-                    (a.AddressFamily == AddressFamily.InterNetworkV6 && a.IsIPv6LinkLocal));
         }
 
         /// <summary>
