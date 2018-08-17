@@ -36,12 +36,14 @@ namespace Makaretu.Dns
             var ready = new ManualResetEvent(false);
             var done = new ManualResetEvent(false);
             Message msg = null;
+            IPEndPoint sender = null;
 
             var mdns = new MulticastService();
             mdns.NetworkInterfaceDiscovered += (s, e) => ready.Set();
             mdns.QueryReceived += (s, e) => 
             {
                 msg = e.Message;
+                sender = e.RemoteEndPoint;
                 done.Set();
             };
             try
@@ -50,6 +52,8 @@ namespace Makaretu.Dns
                 Assert.IsTrue(ready.WaitOne(TimeSpan.FromSeconds(1)), "ready timeout");
                 mdns.SendQuery("some-service.local");
                 Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(1)), "query timeout");
+                Assert.IsNotNull(msg);
+                Assert.IsNotNull(sender);
                 Assert.AreEqual("some-service.local", msg.Questions.First().Name);
                 Assert.AreEqual(Class.IN, msg.Questions.First().Class);
             }
@@ -65,6 +69,7 @@ namespace Makaretu.Dns
             var service = Guid.NewGuid().ToString() + ".local";
             var done = new ManualResetEvent(false);
             Message response = null;
+            IPEndPoint sender = null;
 
             using (var mdns = new MulticastService())
             {
@@ -89,12 +94,14 @@ namespace Makaretu.Dns
                     if (msg.Answers.Any(answer => answer.Name == service))
                     {
                         response = msg;
+                        sender = e.RemoteEndPoint;
                         done.Set();
                     }
                 };
                 mdns.Start();
                 Assert.IsTrue(done.WaitOne(TimeSpan.FromSeconds(1)), "answer timeout");
                 Assert.IsNotNull(response);
+                Assert.IsNotNull(sender);
                 Assert.IsTrue(response.IsResponse);
                 Assert.AreEqual(MessageStatus.NoError, response.Status);
                 Assert.IsTrue(response.AA);

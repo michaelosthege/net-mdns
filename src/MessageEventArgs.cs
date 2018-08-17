@@ -1,6 +1,7 @@
 ﻿using Makaretu.Dns;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Text;
 
 namespace Makaretu.Dns
@@ -18,6 +19,14 @@ namespace Makaretu.Dns
         ///   The received message.
         /// </value>
         public Message Message { get; set; }
+
+        /// <summary>
+        ///   Where the message originated from.
+        /// </summary>
+        /// <value>
+        ///   The IP address and port of the sender.
+        /// </value>
+        public IPEndPoint RemoteEndPoint { get; set; }
     }
 }
 

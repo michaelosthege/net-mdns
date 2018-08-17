@@ -444,6 +444,9 @@ namespace Makaretu.Dns
         /// <param name="length">
         ///   The length of the messages.
         /// </param>
+        /// <param name="remote">
+        ///   The message sender.
+        /// </param>
         /// <remarks>
         ///   Decodes the <paramref name="datagram"/> and then raises
         ///   either the <see cref="QueryReceived"/> or <see cref="AnswerReceived"/> event.
@@ -452,7 +455,7 @@ namespace Makaretu.Dns
         ///   are silently ignored.
         ///   </para>
         /// </remarks>
-        void OnDnsMessage(byte[] datagram, int length)
+        void OnDnsMessage(byte[] datagram, int length, IPEndPoint remote)
         {
             var msg = new Message();
 
@@ -475,11 +478,11 @@ namespace Makaretu.Dns
             {
                 if (msg.IsQuery && msg.Questions.Count > 0)
                 {
-                    QueryReceived?.Invoke(this, new MessageEventArgs { Message = msg });
+                    QueryReceived?.Invoke(this, new MessageEventArgs { Message = msg, RemoteEndPoint = remote });
                 }
                 else if (msg.IsResponse && msg.Answers.Count > 0)
                 {
-                    AnswerReceived?.Invoke(this, new MessageEventArgs { Message = msg });
+                    AnswerReceived?.Invoke(this, new MessageEventArgs { Message = msg, RemoteEndPoint = remote});
                 }
             }
             catch (Exception e)
@@ -531,7 +534,7 @@ namespace Makaretu.Dns
                 while (!cancel.IsCancellationRequested)
                 {
                     var result = await receiver.ReceiveAsync();
-                    OnDnsMessage(result.Buffer, result.Buffer.Length);
+                    OnDnsMessage(result.Buffer, result.Buffer.Length, result.RemoteEndPoint);
                 }
             }
             catch (Exception e)
