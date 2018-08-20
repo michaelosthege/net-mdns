@@ -143,6 +143,7 @@ namespace Makaretu.Dns
             if (log.IsDebugEnabled)
                 log.Debug($"got query for {request.Questions[0].Name} {request.Questions[0].Type}");
             var response = NameServer.ResolveAsync(request).Result;
+
             if (response.Status == MessageStatus.NoError)
             {
                 // Many bonjour browsers don't like DNS-SD response
@@ -152,6 +153,11 @@ namespace Makaretu.Dns
                     response.AdditionalRecords.Clear();
                 }
 
+                // Only return address records that the querier can reach.
+                response.Answers.RemoveAll(rr => IsUnreachable(rr, e.RemoteEndPoint));
+                response.AuthorityRecords.RemoveAll(rr => IsUnreachable(rr, e.RemoteEndPoint));
+                response.AdditionalRecords.RemoveAll(rr => IsUnreachable(rr, e.RemoteEndPoint));
+
                 Mdns.SendAnswer(response);
                 if (log.IsDebugEnabled)
                     log.Debug($"sent answer {response.Answers[0]}");
@@ -159,7 +165,13 @@ namespace Makaretu.Dns
             }
         }
 
-#region IDisposable Support
+        bool IsUnreachable(ResourceRecord rr, IPEndPoint sender)
+        {
+            var arecord = rr as AddressRecord;
+            return !arecord?.Address.IsReachable(sender.Address) ?? false;
+        }
+
+        #region IDisposable Support
 
         /// <inheritdoc />
         protected virtual void Dispose(bool disposing)
